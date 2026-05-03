@@ -252,11 +252,13 @@ public sealed class EnemyController : MonoBehaviour
 
     private bool TryResolveTarget(out Transform activeTarget)
     {
-        if (target != null && target.gameObject.activeInHierarchy)
+        if (target != null && target.gameObject.activeInHierarchy && target != transform.root)
         {
             activeTarget = target;
             return true;
         }
+        
+        target = null;
 
         var hits = Physics2D.OverlapCircleAll(transform.position, aggroRange, targetLayers);
         foreach (var hit in hits)

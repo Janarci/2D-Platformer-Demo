@@ -191,6 +191,11 @@ public class CombatComponent : MonoBehaviour
             return;
         }
 
+        if (!candidate.isTrigger)
+        {
+            return;
+        }
+        
         var targetCombat = candidate.GetComponentInParent<CombatComponent>();
         if (targetCombat == null || !targetCombat.OwnsHurtbox(candidate))
         {
