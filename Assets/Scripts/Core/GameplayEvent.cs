@@ -46,14 +46,83 @@ public abstract class GameplayEvent
 
 public sealed class PlayerDiedEvent : GameplayEvent
 {
-    public PlayerDiedEvent(GameplayInstigator instigator,
+    public PlayerDiedEvent(
+        GameplayInstigator instigator,
         GameObject player)
+        : this(instigator, player, null)
+    {
+    }
+
+    public PlayerDiedEvent(
+        GameplayInstigator instigator,
+        GameObject player,
+        HealthComponent healthComponent)
         : base(instigator, player)
     {
         Player = player;
+        HealthComponent = healthComponent;
     }
     
     public GameObject Player { get;}
+    public HealthComponent HealthComponent { get; }
+}
+
+public sealed class PlayerHealthUpdatedEvent : GameplayEvent
+{
+    public PlayerHealthUpdatedEvent(
+        GameplayInstigator instigator,
+        GameObject player,
+        HealthComponent healthComponent,
+        int previousHealth,
+        int currentHealth,
+        int maxHealth)
+        : base(instigator, player)
+    {
+        Player = player;
+        HealthComponent = healthComponent;
+        PreviousHealth = previousHealth;
+        CurrentHealth = currentHealth;
+        MaxHealth = maxHealth;
+        NormalizedHealth = maxHealth > 0
+            ? Mathf.Clamp01((float)currentHealth / maxHealth)
+            : 0f;
+    }
+
+    public GameObject Player { get; }
+    public HealthComponent HealthComponent { get; }
+    public int PreviousHealth { get; }
+    public int CurrentHealth { get; }
+    public int MaxHealth { get; }
+    public float NormalizedHealth { get; }
+}
+
+public sealed class PlayerDamagedEvent : GameplayEvent
+{
+    public PlayerDamagedEvent(
+        GameplayInstigator instigator,
+        GameObject player,
+        HealthComponent healthComponent,
+        int damage,
+        int currentHealth,
+        int maxHealth)
+        : base(instigator, player)
+    {
+        Player = player;
+        HealthComponent = healthComponent;
+        Damage = damage;
+        CurrentHealth = currentHealth;
+        MaxHealth = maxHealth;
+        NormalizedHealth = maxHealth > 0
+            ? Mathf.Clamp01((float)currentHealth / maxHealth)
+            : 0f;
+    }
+
+    public GameObject Player { get; }
+    public HealthComponent HealthComponent { get; }
+    public int Damage { get; }
+    public int CurrentHealth { get; }
+    public int MaxHealth { get; }
+    public float NormalizedHealth { get; }
 }
 
 public sealed class PlayerHitEvent : GameplayEvent
@@ -68,6 +137,111 @@ public sealed class PlayerHitEvent : GameplayEvent
     }
     public GameObject Player { get;}
     public int Damage { get;}
+}
+
+public sealed class HealthUpdatedGameplayEvent : GameplayEvent
+{
+    public HealthUpdatedGameplayEvent(
+        GameplayInstigator instigator,
+        HealthComponent healthComponent,
+        int previousHealth,
+        int currentHealth,
+        int maxHealth)
+        : base(instigator, healthComponent != null ? healthComponent.gameObject : null)
+    {
+        HealthComponent = healthComponent;
+        PreviousHealth = previousHealth;
+        CurrentHealth = currentHealth;
+        MaxHealth = maxHealth;
+        NormalizedHealth = maxHealth > 0
+            ? Mathf.Clamp01((float)currentHealth / maxHealth)
+            : 0f;
+    }
+
+    public HealthComponent HealthComponent { get; }
+    public int PreviousHealth { get; }
+    public int CurrentHealth { get; }
+    public int MaxHealth { get; }
+    public float NormalizedHealth { get; }
+
+    public override bool CanExecute(GameplayEventContext context)
+    {
+        return base.CanExecute(context)
+            && HealthComponent != null;
+    }
+}
+
+public sealed class HealthDamagedGameplayEvent : GameplayEvent
+{
+    public HealthDamagedGameplayEvent(
+        GameplayInstigator instigator,
+        HealthComponent healthComponent,
+        int damage,
+        int previousHealth,
+        int currentHealth,
+        int maxHealth)
+        : base(instigator, healthComponent != null ? healthComponent.gameObject : null)
+    {
+        HealthComponent = healthComponent;
+        Damage = damage;
+        PreviousHealth = previousHealth;
+        CurrentHealth = currentHealth;
+        MaxHealth = maxHealth;
+        NormalizedHealth = maxHealth > 0
+            ? Mathf.Clamp01((float)currentHealth / maxHealth)
+            : 0f;
+    }
+
+    public HealthComponent HealthComponent { get; }
+    public int Damage { get; }
+    public int PreviousHealth { get; }
+    public int CurrentHealth { get; }
+    public int MaxHealth { get; }
+    public float NormalizedHealth { get; }
+
+    public override bool CanExecute(GameplayEventContext context)
+    {
+        return base.CanExecute(context)
+            && HealthComponent != null;
+    }
+}
+
+public sealed class HealthDiedGameplayEvent : GameplayEvent
+{
+    public HealthDiedGameplayEvent(
+        GameplayInstigator instigator,
+        HealthComponent healthComponent)
+        : base(instigator, healthComponent != null ? healthComponent.gameObject : null)
+    {
+        HealthComponent = healthComponent;
+    }
+
+    public HealthComponent HealthComponent { get; }
+
+    public override bool CanExecute(GameplayEventContext context)
+    {
+        return base.CanExecute(context)
+            && HealthComponent != null;
+    }
+}
+
+public sealed class HealthRevivedGameplayEvent : GameplayEvent
+{
+    public HealthRevivedGameplayEvent(
+        GameplayInstigator instigator,
+        HealthComponent healthComponent)
+        : base(instigator, healthComponent != null ? healthComponent.gameObject : null)
+    {
+        HealthComponent = healthComponent;
+    }
+
+    public HealthComponent HealthComponent { get; }
+
+    public override bool CanExecute(GameplayEventContext context)
+    {
+        return base.CanExecute(context)
+            && HealthComponent != null;
+    }
 }
 
 public sealed class AttackTimelineFinishedGameplayEvent : GameplayEvent

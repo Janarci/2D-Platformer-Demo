@@ -16,9 +16,9 @@ MonoBehaviour:
   damageDelay: 0
   allowFriendlyFire: 0
   applyKnockback: 1
-  horizontalKnockbackVelocity: 10
+  horizontalKnockbackVelocity: 15
   verticalHopVelocity: 5
   preserveHigherVerticalVelocity: 1
-  applyHitstop: 0
-  hitstopTimeScale: 0.05
-  hitstopDuration: 0.06
+  applyHitstop: 1
+  hitstopTimeScale: 0.1
+  hitstopDuration: 0.3

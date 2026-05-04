@@ -39,7 +39,7 @@ public sealed class Bootstrapper : MonoBehaviour
         gameplayEventBus.Initialize(EventContext);
         delayedGameplayEventScheduler.Initialize(gameplayEventBus);
         levelManager.Initialize(platformerContext);
-        gameStateManager.Initialize(gameplayEventBus);
+        gameStateManager.Initialize(gameplayEventBus, platformerContext);
 
         IsInitialized = true;
     }

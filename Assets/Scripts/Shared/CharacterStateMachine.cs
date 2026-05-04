@@ -14,7 +14,8 @@ public enum CharacterState
     JumpStart,
     JumpFall,
     JumpLand,
-    HitReact
+    HitReact,
+    Death
 }
 
 public enum CharacterAttackDirection
@@ -74,7 +75,7 @@ public class CharacterStateMachine : MonoBehaviour
     private float timeSinceAttackPressed = float.PositiveInfinity;
     private float facingDirection = 1f;
     private Vector2 latestMovementAimInput;
-    
+    private bool isDead;
     private void Awake()
     {
         if (!charMovementComponent)
@@ -192,6 +193,11 @@ public class CharacterStateMachine : MonoBehaviour
 
     private CharacterState ResolveState()
     {
+        if (isDead)
+        {
+            return CharacterState.Death;
+        }
+        
         if (hitReactRequested)
         {
             BeginHitReact();
@@ -314,6 +320,7 @@ public class CharacterStateMachine : MonoBehaviour
 
     public void ResetState(CharacterState state = CharacterState.Idle)
     {
+        isDead = false;
         hitReactRequested = false;
         isAttacking = false;
         isHitReacting = false;
@@ -479,6 +486,17 @@ public class CharacterStateMachine : MonoBehaviour
             || state == CharacterState.JumpAttackUp
             || state == CharacterState.JumpAttackDown;
     }
+    
+    public void RequestDeath()
+    {
+        isDead = true;
+        isAttacking = false;
+        isHitReacting = false;
+        combatComponent?.SetAttackHitboxActive(false);
+        charMovementComponent?.ClearControlLocks();
+        SetState(CharacterState.Death, true);
+    }
+    
     private void OnDestroy()
     {
         subscriptions.Dispose();

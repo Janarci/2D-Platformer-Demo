@@ -10,12 +10,8 @@ public sealed class HealthComponent : MonoBehaviour
     [SerializeField] private bool allowFriendlyFire;
     [SerializeField] private HealthFeedbackSettings feedbackSettings;
     [SerializeField] private SpriteRenderer[] spriteRenderers;
+    [SerializeField] private GameplayEventBus gameplayEventBus;
 
-    public event Action<HealthComponent, int, GameplayInstigator> Damaged;
-    public event Action<HealthComponent, GameplayInstigator> Died;
-    public event Action<HealthComponent> Revived;
-
-    private MaterialPropertyBlock flashPropertyBlock;
     private Color[] originalSpriteColors;
     private Coroutine flashRoutine;
 
@@ -39,19 +35,29 @@ public sealed class HealthComponent : MonoBehaviour
         ResetHealth();
     }
 
+    public void Initialize(GameplayEventBus eventBus)
+    {
+        gameplayEventBus = eventBus;
+    }
+
     public void ResetHealth()
     {
+        var previousHealth = CurrentHealth;
         CurrentHealth = maxHealth;
+        PublishHealthUpdated(previousHealth, CreateInstigator());
     }
 
     public void ReviveFull()
     {
         var wasAlive = IsAlive;
+        var previousHealth = CurrentHealth;
         CurrentHealth = maxHealth;
+        var instigator = CreateInstigator();
+        PublishHealthUpdated(previousHealth, instigator);
 
         if (!wasAlive)
         {
-            Revived?.Invoke(this);
+            PublishHealthRevived(instigator);
         }
     }
 
@@ -78,13 +84,15 @@ public sealed class HealthComponent : MonoBehaviour
             return false;
         }
 
+        var previousHealth = CurrentHealth;
         CurrentHealth = Mathf.Max(0, CurrentHealth - amount);
-        Damaged?.Invoke(this, amount, instigator);
+        PublishHealthDamaged(amount, previousHealth, instigator);
+        PublishHealthUpdated(previousHealth, instigator);
         ApplySpriteFlash();
 
         if (CurrentHealth == 0)
         {
-            Died?.Invoke(this, instigator);
+            PublishHealthDied(instigator);
         }
 
         return true;
@@ -97,7 +105,9 @@ public sealed class HealthComponent : MonoBehaviour
             return;
         }
 
+        var previousHealth = CurrentHealth;
         CurrentHealth = Mathf.Min(maxHealth, CurrentHealth + amount);
+        PublishHealthUpdated(previousHealth, CreateInstigator());
     }
 
     private EntityMetadata ResolveEntityMetadata()
@@ -127,9 +137,10 @@ public sealed class HealthComponent : MonoBehaviour
         if (flashRoutine != null)
         {
             StopCoroutine(flashRoutine);
+            flashRoutine = null;
             RestoreSpriteFlash();
         }
-
+        CaptureOriginalSpriteColors();
         flashRoutine = StartCoroutine(RunSpriteFlash());
     }
 
@@ -150,61 +161,36 @@ public sealed class HealthComponent : MonoBehaviour
             return;
         }
 
-        flashPropertyBlock ??= new MaterialPropertyBlock();
-
         foreach (var spriteRenderer in spriteRenderers)
         {
-            if (spriteRenderer == null)
+            if (spriteRenderer == null || spriteRenderer.enabled == false)
             {
                 continue;
             }
 
-            if (feedbackSettings.UseMaterialPropertyBlock)
-            {
-                spriteRenderer.GetPropertyBlock(flashPropertyBlock);
-                flashPropertyBlock.SetFloat(feedbackSettings.FlashAmountShaderProperty, amount);
-                flashPropertyBlock.SetColor(feedbackSettings.FlashColorShaderProperty, feedbackSettings.FlashColor);
-                spriteRenderer.SetPropertyBlock(flashPropertyBlock);
-            }
-
             if (feedbackSettings.UseSpriteColorFallback)
             {
-                spriteRenderer.color = feedbackSettings.FlashColor;
+                spriteRenderer.color = feedbackSettings.HitFlashColor;
             }
         }
     }
 
     private void RestoreSpriteFlash()
     {
-        if (spriteRenderers == null)
+        if (spriteRenderers == null || originalSpriteColors == null)
         {
             return;
         }
 
-        flashPropertyBlock ??= new MaterialPropertyBlock();
-
         for (var i = 0; i < spriteRenderers.Length; i++)
         {
             var spriteRenderer = spriteRenderers[i];
-            if (spriteRenderer == null)
+            if (spriteRenderer == null || i >= originalSpriteColors.Length)
             {
                 continue;
             }
 
-            if (feedbackSettings != null && feedbackSettings.UseMaterialPropertyBlock)
-            {
-                spriteRenderer.GetPropertyBlock(flashPropertyBlock);
-                flashPropertyBlock.SetFloat(feedbackSettings.FlashAmountShaderProperty, 0f);
-                spriteRenderer.SetPropertyBlock(flashPropertyBlock);
-            }
-
-            if (originalSpriteColors != null
-                && i < originalSpriteColors.Length
-                && feedbackSettings != null
-                && feedbackSettings.UseSpriteColorFallback)
-            {
-                spriteRenderer.color = originalSpriteColors[i];
-            }
+            spriteRenderer.color = originalSpriteColors[i];
         }
     }
 
@@ -217,6 +203,7 @@ public sealed class HealthComponent : MonoBehaviour
         }
 
         originalSpriteColors = new Color[spriteRenderers.Length];
+
         for (var i = 0; i < spriteRenderers.Length; i++)
         {
             originalSpriteColors[i] = spriteRenderers[i] != null
@@ -225,6 +212,78 @@ public sealed class HealthComponent : MonoBehaviour
         }
     }
 
+    private void PublishHealthDamaged(
+        int damage,
+        int previousHealth,
+        GameplayInstigator instigator)
+    {
+        if (!CanPublishGameplayEvent())
+        {
+            return;
+        }
+
+        gameplayEventBus.FireInstant(
+            new HealthDamagedGameplayEvent(
+                instigator,
+                this,
+                damage,
+                previousHealth,
+                CurrentHealth,
+                maxHealth));
+    }
+
+    private void PublishHealthUpdated(int previousHealth, GameplayInstigator instigator)
+    {
+        if (previousHealth == CurrentHealth || !CanPublishGameplayEvent())
+        {
+            return;
+        }
+
+        gameplayEventBus.FireInstant(
+            new HealthUpdatedGameplayEvent(
+                instigator,
+                this,
+                previousHealth,
+                CurrentHealth,
+                maxHealth));
+    }
+
+    private void PublishHealthDied(GameplayInstigator instigator)
+    {
+        if (!CanPublishGameplayEvent())
+        {
+            return;
+        }
+
+        gameplayEventBus.FireInstant(new HealthDiedGameplayEvent(instigator, this));
+    }
+
+    private void PublishHealthRevived(GameplayInstigator instigator)
+    {
+        if (!CanPublishGameplayEvent())
+        {
+            return;
+        }
+
+        gameplayEventBus.FireInstant(new HealthRevivedGameplayEvent(instigator, this));
+    }
+
+    private bool CanPublishGameplayEvent()
+    {
+        return gameplayEventBus != null && gameplayEventBus.IsInitialized;
+    }
+
+    private void OnDisable()
+    {
+        if (flashRoutine != null)
+        {
+            StopCoroutine(flashRoutine);
+            flashRoutine = null;
+        }
+
+        RestoreSpriteFlash();
+        
+    }
     private void OnDestroy()
     {
         RestoreSpriteFlash();

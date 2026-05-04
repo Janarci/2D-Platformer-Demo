@@ -143,6 +143,7 @@ public sealed class GameplayEventPresentationListener : MonoBehaviour
         }
 
         combatComponent?.ApplyDamageFeedback(gameplayEvent);
+        audioPlayer?.PlayDamagedSfx();
         
         if (healthComponent.IsAlive)
         {

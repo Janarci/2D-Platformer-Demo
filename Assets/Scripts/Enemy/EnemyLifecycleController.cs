@@ -1,4 +1,3 @@
-using System.Collections;
 using UniRx;
 using UnityEngine;
 
@@ -11,9 +10,9 @@ public sealed class EnemyLifecycleController : MonoBehaviour
     [SerializeField] private CharacterTimelineAnimator timelineAnimator;
     [SerializeField] private Rigidbody2D body;
     [SerializeField] private GameplayEventBus gameplayEventBus;
-    [SerializeField, Min(0f)] private float reviveDelay = 5f;
     [SerializeField] private bool resetToSpawnPoint = true;
-
+    [SerializeField, Min(0f)] private float destroyedEventDelay = 2.0f;
+    
     private readonly CompositeDisposable subscriptions = new();
     private Collider2D[] collidersToToggle;
     private Renderer[] renderersToToggle;
@@ -45,17 +44,13 @@ public sealed class EnemyLifecycleController : MonoBehaviour
         initialTimelineAnimatorEnabled = timelineAnimator != null && timelineAnimator.enabled;
         initialBodySimulated = body == null || body.simulated;
 
-        if (healthComponent != null)
-        {
-            healthComponent.Died += HandleDied;
-        }
-
         BindGameplayEvents();
     }
 
     public void Initialize(GameplayEventBus eventBus)
     {
         gameplayEventBus = eventBus;
+        healthComponent?.Initialize(eventBus);
         BindGameplayEvents();
     }
 
@@ -106,6 +101,12 @@ public sealed class EnemyLifecycleController : MonoBehaviour
             .Where(IsOwnReviveEvent)
             .Subscribe(_ => Revive())
             .AddTo(subscriptions);
+
+        gameplayEventBus
+            .Observe<HealthDiedGameplayEvent>()
+            .Where(IsOwnDeathEvent)
+            .Subscribe(HandleDied)
+            .AddTo(subscriptions);
     }
 
     private bool IsOwnReviveEvent(EnemyReviveGameplayEvent gameplayEvent)
@@ -114,7 +115,14 @@ public sealed class EnemyLifecycleController : MonoBehaviour
             || gameplayEvent.HealthComponent == healthComponent;
     }
 
-    private void HandleDied(HealthComponent deadHealth, GameplayInstigator instigator)
+    private bool IsOwnDeathEvent(HealthDiedGameplayEvent gameplayEvent)
+    {
+        return gameplayEvent != null
+            && (gameplayEvent.HealthComponent == healthComponent
+                || gameplayEvent.TargetObject == gameObject);
+    }
+
+    private void HandleDied(HealthDiedGameplayEvent gameplayEvent)
     {
         if (isDead)
         {
@@ -122,9 +130,9 @@ public sealed class EnemyLifecycleController : MonoBehaviour
         }
 
         isDead = true;
+        //SetDeadPresentation(true);
+        BeginDeathPresentation();
         PublishDestroyedEvent();
-        SetDeadPresentation(true);
-        ScheduleRevive();
     }
 
     private void PublishDestroyedEvent()
@@ -134,27 +142,12 @@ public sealed class EnemyLifecycleController : MonoBehaviour
             return;
         }
 
-        gameplayEventBus.FireInstant(
-            new EnemyDestroyedGameplayEvent(CreateSelfInstigator(), gameObject, healthComponent));
-    }
-
-    private void ScheduleRevive()
-    {
-        if (CanUseGameplayEventBus())
-        {
-            gameplayEventBus.Register(
-                new EnemyReviveGameplayEvent(CreateSelfInstigator(), gameObject, healthComponent),
-                reviveDelay);
-            return;
-        }
-
-        StartCoroutine(ReviveAfterDelay());
-    }
-
-    private IEnumerator ReviveAfterDelay()
-    {
-        yield return new WaitForSeconds(reviveDelay);
-        Revive();
+        gameplayEventBus.Register(
+            new EnemyDestroyedGameplayEvent(CreateSelfInstigator(), gameObject, healthComponent),
+            destroyedEventDelay);
+        
+        // gameplayEventBus.FireInstant(
+        //     new EnemyDestroyedGameplayEvent(CreateSelfInstigator(), gameObject, healthComponent));
     }
 
     private void Revive()
@@ -177,6 +170,40 @@ public sealed class EnemyLifecycleController : MonoBehaviour
         PublishRevivedEvent();
     }
 
+    private void BeginDeathPresentation()
+    {
+        if (stateMachine != null)
+        {
+            stateMachine.HandleAttackInterrupted();
+            stateMachine.RequestDeath();
+        }
+
+        if (enemyController != null)
+        {
+            enemyController.enabled = false;
+        }
+
+        if (enemyMovement != null)
+        {
+            enemyMovement.StopHorizontalMove();
+            enemyMovement.enabled = false;
+        }
+
+        if (body != null)
+        {
+            body.velocity = Vector2.zero;
+        }
+
+
+        // for (var i = 0; i < collidersToToggle.Length; i++)
+        // {
+        //     var enemyCollider = collidersToToggle[i];
+        //     if (enemyCollider != null)
+        //     {
+        //         enemyCollider.enabled = false;
+        //     }
+        // }
+    }
     private void SetDeadPresentation(bool dead)
     {
         if (stateMachine != null)
@@ -221,14 +248,14 @@ public sealed class EnemyLifecycleController : MonoBehaviour
             }
         }
 
-        for (var i = 0; i < renderersToToggle.Length; i++)
-        {
-            var enemyRenderer = renderersToToggle[i];
-            if (enemyRenderer != null)
-            {
-                enemyRenderer.enabled = !dead && initialRendererEnabledStates[i];
-            }
-        }
+        // for (var i = 0; i < renderersToToggle.Length; i++)
+        // {
+        //     var enemyRenderer = renderersToToggle[i];
+        //     if (enemyRenderer != null)
+        //     {
+        //         enemyRenderer.enabled = !dead && initialRendererEnabledStates[i];
+        //     }
+        // }
     }
 
     private void PublishRevivedEvent()
@@ -280,11 +307,6 @@ public sealed class EnemyLifecycleController : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (healthComponent != null)
-        {
-            healthComponent.Died -= HandleDied;
-        }
-
         subscriptions.Dispose();
     }
 }

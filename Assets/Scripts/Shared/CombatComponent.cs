@@ -4,8 +4,6 @@ using UnityEngine;
 
 public class CombatComponent : MonoBehaviour
 {
-    private static int activeHitstopRequests;
-    private static float timeScaleBeforeHitstop = 1f;
 
     [Header("References")]
     [SerializeField] private EntityMetadata entityMetadata;
@@ -236,27 +234,7 @@ public class CombatComponent : MonoBehaviour
         var direction = transform.position.x - attacker.transform.position.x;
         return Mathf.Abs(direction) > 0.01f ? Mathf.Sign(direction) : 1f;
     }
-
-    private static IEnumerator RunHitstop(float timeScale, float duration)
-    {
-        if (activeHitstopRequests == 0)
-        {
-            timeScaleBeforeHitstop = Time.timeScale;
-        }
-
-        activeHitstopRequests++;
-        Time.timeScale = Mathf.Clamp01(timeScale);
-
-        yield return new WaitForSecondsRealtime(duration);
-
-        activeHitstopRequests = Mathf.Max(0, activeHitstopRequests - 1);
-
-        if (activeHitstopRequests == 0)
-        {
-            Time.timeScale = timeScaleBeforeHitstop;
-        }
-    }
-
+    
     private void ApplyHitstop(DamageGameplayEvent gameplayEvent)
     {
         var attackSettings = gameplayEvent.CombatSettings;
@@ -265,6 +243,14 @@ public class CombatComponent : MonoBehaviour
             return;
         }
 
-        StartCoroutine(RunHitstop(attackSettings.HitstopTimeScale, attackSettings.HitstopDuration));
+        if (GameStateManager.Current == null)
+        {
+            return;
+        }
+
+        GameStateManager.Current.RequestHitstop(
+            attackSettings.HitstopTimeScale,
+            attackSettings.HitstopDuration);
+
     }
 }

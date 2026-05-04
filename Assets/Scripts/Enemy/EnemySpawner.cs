@@ -6,7 +6,6 @@ public sealed class EnemySpawner : MonoBehaviour
     [Header("References")]
     [SerializeField] private GameObject enemyPrefab;
     [SerializeField] private GameplayEventBus gameplayEventBus;
-    [SerializeField] private DelayedGameplayEventScheduler delayedGameplayEventScheduler;
     [SerializeField] private PlatformerContext platformerContext;
     [SerializeField] private Transform spawnPoint;
     
@@ -18,7 +17,6 @@ public sealed class EnemySpawner : MonoBehaviour
     private readonly CompositeDisposable subscriptions = new();
     // spawner only tracks/spawns 1
     private GameObject currentEnemy;
-    private bool isRespawnedQueued;
     private bool isObservingGameplayEvents;
 
     public GameObject CurrentEnemy => currentEnemy;
@@ -33,11 +31,6 @@ public sealed class EnemySpawner : MonoBehaviour
         if (!gameplayEventBus)
         {
             gameplayEventBus = FindObjectOfType<GameplayEventBus>(true);
-        }
-
-        if (!delayedGameplayEventScheduler)
-        {
-            delayedGameplayEventScheduler = FindObjectOfType<DelayedGameplayEventScheduler>(true);
         }
     }
 
@@ -81,6 +74,11 @@ public sealed class EnemySpawner : MonoBehaviour
     }
     public GameObject SpawnEnemy()
     {
+        if (currentEnemy != null)
+        {
+            return currentEnemy;
+        }
+
         if (enemyPrefab == null)
         {
             Debug.LogWarning($"{nameof(EnemySpawner)} requires an enemy prefab.", this);
@@ -95,22 +93,56 @@ public sealed class EnemySpawner : MonoBehaviour
             spawnTransform.position,
             spawnTransform.rotation,
             parent);
+        
+        RandomizeEnemySpriteColor(currentEnemy);
 
         InitializeSpawnedEnemy(currentEnemy);
         return currentEnemy;
     }
 
-    public void ResetEnemy()
+    private void RandomizeEnemySpriteColor(GameObject enemy)
     {
-        
-        //todo: reuse enemy
-        if (currentEnemy != null)
+        if (enemy == null)
         {
-            Destroy(currentEnemy);
-            currentEnemy = null;
+            return;
         }
 
-        SpawnEnemy();
+        SpriteRenderer[] spriteRenderers = enemy.GetComponentsInChildren<SpriteRenderer>();
+
+        Color randomColor = new Color(
+            Random.Range(0.5f, 1f),
+            Random.Range(0.5f, 1f),
+            Random.Range(0.5f, 1f),
+            1f
+        );
+
+        foreach (SpriteRenderer spriteRenderer in spriteRenderers)
+        {
+            if (spriteRenderer == null || spriteRenderer.enabled == false)
+            {
+                continue;
+            }
+
+            Color originalColor = spriteRenderer.color;
+            spriteRenderer.color = new Color(
+                randomColor.r,
+                randomColor.g,
+                randomColor.b,
+                originalColor.a
+            );
+        }
+    }
+    
+    public void ResetEnemy()
+    {
+        if (currentEnemy == null)
+        {
+            SpawnEnemy();
+            return;
+        }
+        InitializeSpawnedEnemy(currentEnemy);
+        //currentEnemy.SetActive(false);
+        ReviveCurrentEnemy();
     }
 
     private bool IsCurrentEnemyDestroyedEvent(EnemyDestroyedGameplayEvent gameplayEvent)
@@ -143,6 +175,11 @@ public sealed class EnemySpawner : MonoBehaviour
 
         if (gameplayEventBus != null)
         {
+            foreach (var healthComponent in enemy.GetComponentsInChildren<HealthComponent>(true))
+            {
+                healthComponent.Initialize(gameplayEventBus);
+            }
+
             foreach (var lifecycleController in enemy.GetComponentsInChildren<EnemyLifecycleController>(true))
             {
                 lifecycleController.Initialize(gameplayEventBus);
@@ -173,6 +210,27 @@ public sealed class EnemySpawner : MonoBehaviour
         {
             movement.Initialize(platformerContext);
         }
+    }
+
+    private void ReviveCurrentEnemy()
+    {
+        if (currentEnemy == null)
+        {
+            return;
+        }
+
+        var healthComponent = currentEnemy.GetComponentInChildren<HealthComponent>(true);
+        if (gameplayEventBus == null || !gameplayEventBus.IsInitialized || healthComponent == null)
+        {
+            return;
+        }
+
+        gameplayEventBus.Register(
+            new EnemyReviveGameplayEvent(
+                new GameplayInstigator(gameObject, GameplayFaction.Environment),
+                currentEnemy,
+                healthComponent),
+            spawnDelay);
     }
 
     private void OnDestroy()

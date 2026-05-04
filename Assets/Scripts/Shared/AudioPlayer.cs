@@ -3,7 +3,9 @@ using UnityEngine;
 public sealed class AudioPlayer : MonoBehaviour
 {
     [SerializeField] private AudioSource audioSource;
-
+    [SerializeField] private AudioClip damagedSfx;
+    [SerializeField, Range(0f, 1f)] private float damagedSfxVolume = 1f;
+    
     private void Awake()
     {
         if (audioSource == null)
@@ -42,4 +44,10 @@ public sealed class AudioPlayer : MonoBehaviour
             audioSource.Stop();
         }
     }
+
+    public void PlayDamagedSfx()
+    {
+        PlayOneShot(damagedSfx, damagedSfxVolume);
+    }
+    
 }
