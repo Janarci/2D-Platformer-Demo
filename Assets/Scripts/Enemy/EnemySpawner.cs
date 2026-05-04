@@ -6,16 +6,19 @@ public sealed class EnemySpawner : MonoBehaviour
     [Header("References")]
     [SerializeField] private GameObject enemyPrefab;
     [SerializeField] private GameplayEventBus gameplayEventBus;
+    [SerializeField] private DelayedGameplayEventScheduler delayedGameplayEventScheduler;
     [SerializeField] private PlatformerContext platformerContext;
     [SerializeField] private Transform spawnPoint;
-
+    
     [Header("Spawn")]
     [SerializeField] private bool spawnOnStart = true;
     [SerializeField] private bool parentEnemyToSpawner;
+    [SerializeField, Min(0f)] private float spawnDelay = 5f;
 
     private readonly CompositeDisposable subscriptions = new();
     // spawner only tracks/spawns 1
     private GameObject currentEnemy;
+    private bool isRespawnedQueued;
     private bool isObservingGameplayEvents;
 
     public GameObject CurrentEnemy => currentEnemy;
@@ -23,7 +26,6 @@ public sealed class EnemySpawner : MonoBehaviour
     private void Awake()
     {
         ResolveReferences();
-        BindGameplayEvents();
     }
 
     private void ResolveReferences()
@@ -31,6 +33,11 @@ public sealed class EnemySpawner : MonoBehaviour
         if (!gameplayEventBus)
         {
             gameplayEventBus = FindObjectOfType<GameplayEventBus>(true);
+        }
+
+        if (!delayedGameplayEventScheduler)
+        {
+            delayedGameplayEventScheduler = FindObjectOfType<DelayedGameplayEventScheduler>(true);
         }
     }
 
@@ -69,6 +76,8 @@ public sealed class EnemySpawner : MonoBehaviour
         {
             SpawnEnemy();
         }
+        BindGameplayEvents();
+        
     }
     public GameObject SpawnEnemy()
     {
@@ -93,6 +102,7 @@ public sealed class EnemySpawner : MonoBehaviour
 
     public void ResetEnemy()
     {
+        
         //todo: reuse enemy
         if (currentEnemy != null)
         {

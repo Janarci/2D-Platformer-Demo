@@ -27,8 +27,8 @@ Transform:
   m_GameObject: {fileID: 353799178591581962}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.625, y: -0.17200005, z: 0}
-  m_LocalScale: {x: 0.8, y: 0.3375, z: 1}
+  m_LocalPosition: {x: 0.442, y: -0.17200005, z: 0}
+  m_LocalScale: {x: 0.92343426, y: 0.540189, z: 1.1856}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1092432138655030437}
@@ -194,7 +194,7 @@ CapsuleCollider2D:
   m_IsTrigger: 1
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: -0.06749487, y: -0.051605225}
+  m_Offset: {x: 0, y: 0}
   m_Size: {x: 0.438807, y: 0.875129}
   m_Direction: 0
 --- !u!1 &3321506186456314506
@@ -551,8 +551,8 @@ Transform:
   m_GameObject: {fileID: 8691472676728993860}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 0, y: -0.1, z: 0}
+  m_LocalScale: {x: 2, y: 2, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1092432138655030437}
@@ -598,8 +598,8 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 968551977, guid: 80c0ac1a0c173184ebe05d6d35ded12d, type: 3}
-  m_Color: {r: 0.3537736, g: 1, b: 0.58259434, a: 1}
+  m_Sprite: {fileID: -1980641909, guid: b4254b154e43c1a48848f600265ca411, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -760,7 +760,7 @@ CapsuleCollider2D:
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: -0.059487462, y: -0.02558133}
+  m_Offset: {x: 0, y: 0}
   m_Size: {x: 0.39076257, y: 0.8230812}
   m_Direction: 0
 --- !u!50 &8125888598859171836
@@ -819,7 +819,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   body: {fileID: 8125888598859171836}
-  platformerContext: {fileID: 11400000, guid: 62767383596ee9349813e5c1a7ee640d, type: 2}
+  platformerContext: {fileID: 11400000, guid: 24bde475ef35a2d458115916065356c0, type: 2}
   groundCheck: {fileID: 3398793050199261575}
   groundCheckSize: {x: 0.27, y: 1.07}
   groundLayers:
@@ -871,7 +871,7 @@ PlayableDirector:
   m_GameObject: {fileID: 8809964574927007947}
   m_Enabled: 1
   serializedVersion: 3
-  m_PlayableAsset: {fileID: 11400000, guid: b65894480b7ac9543948de864c8a40dd, type: 2}
+  m_PlayableAsset: {fileID: 11400000, guid: a76f1c1b8fce00e47aecfe81e8857aad, type: 2}
   m_InitialState: 0
   m_WrapMode: 0
   m_DirectorUpdateMode: 1
@@ -890,6 +890,20 @@ PlayableDirector:
   - key: {fileID: 1758961790935043487, guid: b65894480b7ac9543948de864c8a40dd, type: 2}
     value: {fileID: 353799178591581962}
   - key: {fileID: -8496649510092804448, guid: b65894480b7ac9543948de864c8a40dd, type: 2}
+    value: {fileID: 0}
+  - key: {fileID: 0}
+    value: {fileID: 0}
+  - key: {fileID: 4470031700154340124, guid: 84ca8b77d18732d4fbb51297460b708b, type: 2}
+    value: {fileID: 3196225981119845305}
+  - key: {fileID: 4470031700154340124, guid: e79a08efd34df4f44968854ccc718bf3, type: 2}
+    value: {fileID: 3196225981119845305}
+  - key: {fileID: 4470031700154340124, guid: a76f1c1b8fce00e47aecfe81e8857aad, type: 2}
+    value: {fileID: 3196225981119845305}
+  - key: {fileID: -1839852075689183783, guid: a76f1c1b8fce00e47aecfe81e8857aad, type: 2}
+    value: {fileID: 353799178591581962}
+  - key: {fileID: 6264700394030750727, guid: a76f1c1b8fce00e47aecfe81e8857aad, type: 2}
+    value: {fileID: 0}
+  - key: {fileID: 5505820513671720072, guid: a76f1c1b8fce00e47aecfe81e8857aad, type: 2}
     value: {fileID: 0}
   m_ExposedReferences:
     m_References: []
@@ -936,23 +950,29 @@ MonoBehaviour:
   - State: 1
     Timeline: {fileID: 11400000, guid: 8fdc48a696af64b44bc0b963b926e6b5, type: 2}
     WrapMode: 1
-  - State: 8
-    Timeline: {fileID: 11400000, guid: 6a507ad55d74bd747a2c30dfe93fcffe, type: 2}
-    WrapMode: 1
   - State: 2
     Timeline: {fileID: 11400000, guid: b65894480b7ac9543948de864c8a40dd, type: 2}
     WrapMode: 2
   - State: 3
     Timeline: {fileID: 0}
     WrapMode: 2
+  - State: 4
+    Timeline: {fileID: 11400000, guid: a76f1c1b8fce00e47aecfe81e8857aad, type: 2}
+    WrapMode: 2
   - State: 5
-    Timeline: {fileID: 0}
+    Timeline: {fileID: 11400000, guid: a76f1c1b8fce00e47aecfe81e8857aad, type: 2}
     WrapMode: 2
   - State: 6
-    Timeline: {fileID: 0}
+    Timeline: {fileID: 11400000, guid: a76f1c1b8fce00e47aecfe81e8857aad, type: 2}
     WrapMode: 2
   - State: 7
+    Timeline: {fileID: 11400000, guid: 84ca8b77d18732d4fbb51297460b708b, type: 2}
+    WrapMode: 2
+  - State: 8
     Timeline: {fileID: 11400000, guid: 6a507ad55d74bd747a2c30dfe93fcffe, type: 2}
+    WrapMode: 1
+  - State: 9
+    Timeline: {fileID: 11400000, guid: e79a08efd34df4f44968854ccc718bf3, type: 2}
     WrapMode: 2
   gameplayEventBus: {fileID: 0}
 --- !u!114 &7338937183452082040
