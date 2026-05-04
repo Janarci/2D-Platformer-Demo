@@ -135,4 +135,4 @@ MonoBehaviour:
   spawnPoint: {fileID: 3588824621000978621}
   spawnOnStart: 1
   parentEnemyToSpawner: 0
-  spawnDelay: 3
+  spawnDelay: 5
