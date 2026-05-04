@@ -38,7 +38,10 @@ public abstract class CharacterMovement : MonoBehaviour
 
     public virtual void Initialize(PlatformerContext context)
     {
-        platformerContext = context;
+        if (platformerContext == null)
+        {
+            platformerContext = context;
+        }
         ResolveBody();
     }
 

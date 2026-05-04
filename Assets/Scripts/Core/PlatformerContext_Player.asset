@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 386a1a16089f82d48af5f18b571c8b35, type: 3}
   m_Name: PlatformerContext_Player
   m_EditorClassIdentifier: 
-  runSpeed: 5
-  acceleration: 70
+  runSpeed: 4
+  acceleration: 100
   deceleration: 80
   jumpForce: 10
   coyoteTime: 0.1

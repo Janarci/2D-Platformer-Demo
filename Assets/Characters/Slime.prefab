@@ -129,6 +129,7 @@ GameObject:
   - component: {fileID: 7222765249240942782}
   - component: {fileID: 3691950820121338340}
   - component: {fileID: 5937217161314254312}
+  - component: {fileID: 1420485600940684502}
   m_Layer: 7
   m_Name: Slime
   m_TagString: Untagged
@@ -612,6 +613,22 @@ MonoBehaviour:
   gameplayEventBus: {fileID: 0}
   resetToSpawnPoint: 1
   destroyedEventDelay: 2
+--- !u!114 &1420485600940684502
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 977745530246473951}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90e018b8d2729394390b4f4b0e8032ea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  defaultParent: {fileID: 0}
+  damagedVfxPrefab: {fileID: 1971316168456835241, guid: 9d50ddee6f856a442aedb3d07895cd22, type: 3}
+  damagedVfxSpawnPoint: {fileID: 2467810400577103059}
+  damagedVfxOffset: {x: 0, y: 0, z: 0}
 --- !u!1 &2592029635190418087
 GameObject:
   m_ObjectHideFlags: 0
