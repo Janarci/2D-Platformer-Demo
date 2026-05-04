@@ -62,6 +62,11 @@ public sealed class GameplayEventPresentationListener : MonoBehaviour
         {
             characterStateMachine = ResolveTargetComponent<CharacterStateMachine>();
         }
+        
+        if (!gameplayEventBus)
+        {
+            gameplayEventBus = FindObjectOfType<GameplayEventBus>(true);
+        }
     }
 
     private void BindGameplayEvents()

@@ -58,7 +58,7 @@ public class CombatComponent : MonoBehaviour
             return;
         }
 
-        attackHitboxCollider.enabled = active;
+        attackHitboxCollider.gameObject.gameObject.SetActive(active);
 
         if (active)
         {
@@ -146,7 +146,10 @@ public class CombatComponent : MonoBehaviour
         {
             body = GetComponentInParent<Rigidbody2D>();
         }
-
+        if (!gameplayEventBus)
+        {
+            gameplayEventBus = FindObjectOfType<GameplayEventBus>(true);
+        }
     }
 
     private void ConfigureOverlapQuery()

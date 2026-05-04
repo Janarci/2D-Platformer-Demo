@@ -96,6 +96,12 @@ public class CharacterStateMachine : MonoBehaviour
         {
             combatComponent = GetComponent<CombatComponent>();
         }
+        
+        if (!gameplayEventBus)
+        {
+            gameplayEventBus = FindObjectOfType<GameplayEventBus>(true);
+        }
+        
         BindGameplayEvents();
     }
 

@@ -36,6 +36,12 @@ public class CharacterTimelineAnimator : MonoBehaviour
             directorComponent.paused += HandleDirectorPaused;
             directorComponent.stopped += HandleDirectorStopped;
         }
+        
+        if (!gameplayEventBus)
+        {
+            gameplayEventBus = FindObjectOfType<GameplayEventBus>(true);
+        }
+        
     }
 
     public void Initialize(GameplayEventBus eventBus)
