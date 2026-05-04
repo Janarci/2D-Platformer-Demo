@@ -93,7 +93,42 @@ public sealed class AttackTimelineFinishedGameplayEvent : GameplayEvent
         return base.CanExecute(context)
             && Character != null
             && TimelineAnimator != null
-            && FinishedState == CharacterState.Attack;
+            && IsAttackState(FinishedState);
+    }
+    
+    private static bool IsAttackState(CharacterState state)
+    {
+        return state == CharacterState.Attack
+            || state == CharacterState.AttackUp
+            || state == CharacterState.JumpAttack
+            || state == CharacterState.JumpAttackUp
+            || state == CharacterState.JumpAttackDown;
+    }
+}
+
+public sealed class CharacterStateTimelineFinishedGameplayEvent : GameplayEvent
+{
+    public CharacterStateTimelineFinishedGameplayEvent(
+        GameplayInstigator instigator,
+        GameObject character,
+        CharacterTimelineAnimator timelineAnimator,
+        CharacterState finishedState)
+        : base(instigator, character)
+    {
+        Character = character;
+        TimelineAnimator = timelineAnimator;
+        FinishedState = finishedState;
+    }
+
+    public GameObject Character { get; }
+    public CharacterTimelineAnimator TimelineAnimator { get; }
+    public CharacterState FinishedState { get; }
+
+    public override bool CanExecute(GameplayEventContext context)
+    {
+        return base.CanExecute(context)
+            && Character != null
+            && TimelineAnimator != null;
     }
 }
 

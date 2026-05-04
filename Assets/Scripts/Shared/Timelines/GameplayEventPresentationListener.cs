@@ -9,6 +9,7 @@ public sealed class GameplayEventPresentationListener : MonoBehaviour
     [SerializeField] private VFXSpawner vfxSpawner;
     [SerializeField] private HealthComponent healthComponent;
     [SerializeField] private CombatComponent combatComponent;
+    [SerializeField] private CharacterStateMachine characterStateMachine;
 
     private readonly CompositeDisposable subscriptions = new();
     private bool isObserving;
@@ -55,6 +56,11 @@ public sealed class GameplayEventPresentationListener : MonoBehaviour
         if (!combatComponent)
         {
             combatComponent = ResolveTargetComponent<CombatComponent>();
+        }
+        
+        if (!characterStateMachine)
+        {
+            characterStateMachine = ResolveTargetComponent<CharacterStateMachine>();
         }
     }
 
@@ -132,6 +138,11 @@ public sealed class GameplayEventPresentationListener : MonoBehaviour
         }
 
         combatComponent?.ApplyDamageFeedback(gameplayEvent);
+        
+        if (healthComponent.IsAlive)
+        {
+            characterStateMachine?.RequestHitReact(gameplayEvent.Instigator);
+        }
     }
 
     private T ResolveTargetComponent<T>() where T : Component
@@ -153,5 +164,6 @@ public sealed class GameplayEventPresentationListener : MonoBehaviour
     private void OnDestroy()
     {
         subscriptions.Dispose();
+        gameplayEventBus.ReleaseTarget(gameObject);
     }
 }

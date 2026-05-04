@@ -31,11 +31,15 @@ public sealed class PlayerController : MonoBehaviour
             return;
         }
 
-        playerMovement.SetInput(activeInputSource.ReadMovementInput());
+        var movementInput = activeInputSource.ReadMovementInput();
+        var combatInput = activeInputSource.ReadCombatInput();
+        
+        playerMovement.SetInput(movementInput);
 
         if (characterStateMachine)
         {
-            characterStateMachine.SetCombatInput(activeInputSource.ReadCombatInput());
+            characterStateMachine.SetMovementAimInput(movementInput.Move);
+            characterStateMachine.SetCombatInput(combatInput);
         }
     }
 

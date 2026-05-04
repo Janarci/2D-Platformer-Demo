@@ -43,22 +43,22 @@ public class CharacterTimelineAnimator : MonoBehaviour
         gameplayEventBus = eventBus;
     }
 
-    public void PlayState(CharacterState state, bool forceRestart = false)
+    public bool TryPlayState(CharacterState state, bool forceRestart = false)
     {
         if (!directorComponent)
         {
-            return;
+            return false;
         }
 
         if (forceRestart == false && hasCurrentState && currentState == state)
         {
-            return;
+            return true;
         }
 
         var timeline = GetTimeline(state);
         if (!timeline)
         {
-            return;
+            return false;
         }
         
         currentState = state;
@@ -68,8 +68,14 @@ public class CharacterTimelineAnimator : MonoBehaviour
         directorComponent.extrapolationMode = GetWrapMode(state);
         directorComponent.time = 0;
         directorComponent.Play();
+        return true;
     }
 
+    public bool HasTimeline(CharacterState state)
+    {
+        return GetTimeline(state) != null;
+    }
+    
     public void StopCurrentTimeline(bool suppressCompletionEvent = true)
     {
         if (!directorComponent)
@@ -131,12 +137,12 @@ public class CharacterTimelineAnimator : MonoBehaviour
 
     private void HandleTimelineCompleted()
     {
-        FireAttackTimelineFinishedEvent();
+        FireStateTimelineFinishedEvent();
     }
 
-    private void FireAttackTimelineFinishedEvent()
+    private void FireStateTimelineFinishedEvent()
     {
-        if (timelineFinishEventSent || currentState != CharacterState.Attack)
+        if (timelineFinishEventSent || !ShouldPublishFinishedEvent(currentState))
         {
             return;
         }
@@ -146,13 +152,13 @@ public class CharacterTimelineAnimator : MonoBehaviour
         if (gameplayEventBus == null)
         {
             Debug.LogError(
-                $"{nameof(CharacterTimelineAnimator)} cannot publish attack finish event because {nameof(gameplayEventBus)} is missing.",
+                $"{nameof(CharacterTimelineAnimator)} cannot publish state finish event because {nameof(gameplayEventBus)} is missing.",
                 this);
             return;
         }
 
         var instigator = new GameplayInstigator(gameObject);
-        var gameplayEvent = new AttackTimelineFinishedGameplayEvent(
+        var gameplayEvent = new CharacterStateTimelineFinishedGameplayEvent(
             instigator,
             gameObject,
             this,
@@ -161,6 +167,16 @@ public class CharacterTimelineAnimator : MonoBehaviour
         gameplayEventBus.FireInstant(gameplayEvent);
     }
 
+    private static bool ShouldPublishFinishedEvent(CharacterState state)
+    {
+        return state == CharacterState.Attack
+            || state == CharacterState.AttackUp
+            || state == CharacterState.JumpAttack
+            || state == CharacterState.JumpAttackUp
+            || state == CharacterState.JumpAttackDown
+            || state == CharacterState.HitReact;
+    }
+    
     private bool IsAtTimelineEnd()
     {
         if (!directorComponent || directorComponent.playableAsset == null)

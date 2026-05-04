@@ -236,4 +236,21 @@ public sealed class GameplayEventBus : MonoBehaviour
         public GameplayEvent Event { get; }
         public int Sequence { get; }
     }
+    
+    public void ReleaseTarget(GameObject targetObject)
+    {
+        if (targetObject == null)
+        {
+            return;
+        }
+
+        if (!targetEventStreams.TryGetValue(targetObject, out var targetStream))
+        {
+            return;
+        }
+
+        targetStream.OnCompleted();
+        targetStream.Dispose();
+        targetEventStreams.Remove(targetObject);
+    }
 }

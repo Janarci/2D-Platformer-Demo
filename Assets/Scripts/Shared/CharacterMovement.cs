@@ -1,5 +1,13 @@
 using UnityEngine;
 
+[System.Flags]
+public enum CharacterControlLockReason
+{
+    None = 0,
+    Attack = 1,
+    HitReact = 2
+}
+
 [RequireComponent(typeof(Rigidbody2D))]
 public abstract class CharacterMovement : MonoBehaviour
 {
@@ -14,8 +22,10 @@ public abstract class CharacterMovement : MonoBehaviour
     private bool pendingJumpReleased;
     private float timeSinceGrounded = float.PositiveInfinity;
     private float timeSinceJumpPressed = float.PositiveInfinity;
+    private CharacterControlLockReason controlLocks;
 
     public bool IsGrounded { get; private set; }
+    public bool IsControlLocked => controlLocks != CharacterControlLockReason.None;
     public Vector2 Velocity => body != null ? body.velocity : Vector2.zero;
     public float FacingDirection { get; private set; } = 1f;
     protected PlatformerContext PlatformerContext => platformerContext;
@@ -34,6 +44,12 @@ public abstract class CharacterMovement : MonoBehaviour
 
     public virtual void SetIntent(CharacterMovementIntent intent)
     {
+        if (IsControlLocked)
+        {
+            ClearMovementInput();
+            return;
+        }
+        
         pendingJumpPressed |= intent.JumpPressed;
         pendingJumpReleased |= intent.JumpReleased;
         currentIntent = new CharacterMovementIntent(
@@ -50,12 +66,54 @@ public abstract class CharacterMovement : MonoBehaviour
 
     public void SetFacingDirection(float horizontalDirection)
     {
+        if (IsControlLocked)
+        {
+            return;
+        }
+        
+        SetFacingDirectionForced(horizontalDirection);
+    }
+
+    public void SetFacingDirectionForced(float horizontalDirection)
+    {
         if (Mathf.Abs(horizontalDirection) > 0.01f)
         {
             FacingDirection = Mathf.Sign(horizontalDirection);
         }
     }
+    
+    public void AddControlLock(CharacterControlLockReason reason, bool stopHorizontalVelocity = true)
+    {
+        if (reason == CharacterControlLockReason.None)
+        {
+            return;
+        }
 
+        var hadReason = (controlLocks & reason) != 0;
+        controlLocks |= reason;
+        ClearMovementInput();
+
+        if (!hadReason && stopHorizontalVelocity && body != null)
+        {
+            body.velocity = new Vector2(0f, body.velocity.y);
+        }
+    }
+    
+    public void RemoveControlLock(CharacterControlLockReason reason)
+    {
+        if (reason == CharacterControlLockReason.None)
+        {
+            return;
+        }
+
+        controlLocks &= ~reason;
+    }
+
+    public void ClearControlLocks()
+    {
+        controlLocks = CharacterControlLockReason.None;
+    }
+    
     protected virtual void FixedUpdate()
     {
         if (!body || !platformerContext)
@@ -100,6 +158,11 @@ public abstract class CharacterMovement : MonoBehaviour
 
     private void ApplyHorizontalMovement()
     {
+        if (IsControlLocked)
+        {
+            return;
+        }
+        
         var targetSpeed = currentIntent.Move.x * platformerContext.RunSpeed;
         var rate = Mathf.Abs(targetSpeed) > 0.01f
             ? platformerContext.Acceleration
@@ -115,6 +178,12 @@ public abstract class CharacterMovement : MonoBehaviour
 
     private void TryApplyJump()
     {
+        if (IsControlLocked)
+        {
+            timeSinceJumpPressed = float.PositiveInfinity;
+            return;
+        }
+        
         var canUseCoyoteTime = timeSinceGrounded <= platformerContext.CoyoteTime;
         var hasBufferedJump = timeSinceJumpPressed <= platformerContext.JumpBufferTime;
 
@@ -162,5 +231,12 @@ public abstract class CharacterMovement : MonoBehaviour
             false,
             currentIntent.JumpHeld,
             false);
+    }
+    
+    private void ClearMovementInput()
+    {
+        pendingJumpPressed = false;
+        pendingJumpReleased = false;
+        currentIntent = new CharacterMovementIntent(Vector2.zero, false, false, false);
     }
 }

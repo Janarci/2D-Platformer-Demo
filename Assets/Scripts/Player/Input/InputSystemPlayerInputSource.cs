@@ -80,6 +80,8 @@ public sealed class InputSystemPlayerInputSource : MonoBehaviour, IPlayerInputSo
         {
             move.x += Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed ? -1f : 0f;
             move.x += Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed ? 1f : 0f;
+            move.y += Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed ? -1f : 0f;
+            move.y += Keyboard.current.wKey.isPressed || Keyboard.current.upArrowKey.isPressed ? 1f : 0f;
         }
 
         if (Gamepad.current != null)
